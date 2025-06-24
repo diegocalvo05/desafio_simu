@@ -4,6 +4,9 @@
 #include <iostream>
 #include <queue>
 #include <algorithm>
+#include <set>
+#include <tuple>
+
 
 // Loads a maze from a txt file and returns it as a mazeGrid (vector<vector<int>>))
 MazeGrid LoadMazeFromFile(const char* filename) {
@@ -30,48 +33,78 @@ MazeGrid LoadMazeFromFile(const char* filename) {
     return maze;
 }
 
-// Check if the cell (x, y) is valid for the maze
-bool IsCellValid(int x, int y, const MazeGrid& grid, const std::vector<std::vector<bool>>& visited) {
-    int n = grid.size();
-    int m = grid[0].size();
+bool IsCellValid(int x, int y, const MazeGrid& grid, const std::vector<std::vector<bool>>& visited, int current_turn) {
+    if (x < 0 || y < 0 || x >= grid.size() || y >= grid[0].size()) return false;
+    if (visited[x][y]) return false;
 
-    return (x >= 0 && y >= 0 && x < n && y < m && grid[x][y] == 0 && !visited[x][y]);
+    int cell = grid[x][y];
+    if (cell == 1) return false;
+    if (cell == 2 && current_turn % 2 != 0) return false;
+
+    return true;
 }
 
-std::vector<std::pair<int, int>> ShortestPathBfs(const MazeGrid& grid, std::pair<int, int> start, std::pair<int, int> end) {
-    int n = grid.size();
-    int m = grid[0].size();
+bool IsCellOpen(int x, int y, const MazeGrid &maze, const std::vector<std::vector<bool>> &visited,
+                const std::vector<DynamicWall> &dynamic_walls, int turn) {
+    int rows = maze.size(), cols = maze[0].size();
+    if (x < 0 || y < 0 || x >= rows || y >= cols) return false;
+    if (visited[x][y]) return false;
 
-    std::vector<std::vector<bool>> visited(n, std::vector<bool>(m, false));
-    std::vector<std::vector<std::pair<int, int>>> predecessor(n, std::vector<std::pair<int, int>>(m, {-1, -1}));
+    int cell = maze[x][y];
 
-    std::queue<std::pair<int, int>> q;
-    q.push(start);
+    if (cell == 1) return false;
+    if (cell == 2 && turn % 2 != 0) return false;
+    if (cell == 3) {
+        for (const auto &dw : dynamic_walls)
+            if (dw.row == x && dw.col == y && dw.turns_to_open > turn)
+                return false;
+    }
+
+    return true;
+}
+
+
+std::vector<std::pair<int, int>> ShortestPathBfs(
+    const MazeGrid &maze,
+    std::pair<int, int> start,
+    std::pair<int, int> end,
+    const std::vector<DynamicWall> &dynamic_walls,
+    int current_turn
+) {
+    int rows = maze.size();
+    int cols = maze[0].size();
+
+    std::vector<std::vector<bool>> visited(rows, std::vector<bool>(cols, false));
+    std::vector<std::vector<std::pair<int, int>>> predecessor(rows, std::vector<std::pair<int, int>>(cols, {-1, -1}));
+
+    std::queue<std::tuple<int, int, int>> q; // x, y, turno
+    q.push({start.first, start.second, current_turn});
     visited[start.first][start.second] = true;
 
-    const int dx[] = {-1, 1, 0, 0}; // up, down
-    const int dy[] = {0, 0, -1, 1}; // left, right
+    const int dx[] = {-1, 1, 0, 0};
+    const int dy[] = {0, 0, -1, 1};
 
     while (!q.empty()) {
-        auto [x, y] = q.front(); q.pop();
+        auto [x, y, turn] = q.front(); q.pop();
 
-        if (std::make_pair(x, y) == end) break;
+        if (std::make_pair(x, y) == end)
+            break;
 
         for (int i = 0; i < 4; ++i) {
             int nx = x + dx[i];
             int ny = y + dy[i];
+            int next_turn = turn + 1;
 
-            if (IsCellValid(nx, ny, grid, visited)) {
+            if (IsCellOpen(nx, ny, maze, visited, dynamic_walls, next_turn)) {
                 visited[nx][ny] = true;
                 predecessor[nx][ny] = {x, y};
-                q.push({nx, ny});
+                q.push({nx, ny, next_turn});
             }
         }
     }
 
-    // backtrack to find the path
     std::vector<std::pair<int, int>> path;
-    if (!visited[end.first][end.second]) return path; // no path found
+    if (!visited[end.first][end.second]) return path;
 
     std::pair<int, int> current = end;
     while (current != start) {
@@ -81,6 +114,5 @@ std::vector<std::pair<int, int>> ShortestPathBfs(const MazeGrid& grid, std::pair
 
     path.push_back(start);
     std::reverse(path.begin(), path.end());
-
     return path;
 }
