@@ -1,9 +1,9 @@
 #include "game.h"
-#include "config.h" // Para constantes globales
-#include <iostream>  // Para std::cerr
+#include "config.h"
+#include <iostream>
 
 Game::Game(const std::string& maze_filename)
-    : player(0, 0), // Posición inicial por defecto, se ajustará en InitializeGame
+    : player(0, 0),
       clone(-1, -1),
       renderer(SCREEN_WIDTH, SCREEN_HEIGHT, "Escape the Grid - Modular"),
       current_turn(0),
@@ -17,7 +17,6 @@ Game::Game(const std::string& maze_filename)
 
 Game::~Game()
 {
-    // El destructor de Renderer se encargará de CloseWindow()
 }
 
 void Game::InitializeGame(const std::string& maze_filename)
@@ -33,8 +32,7 @@ void Game::InitializeGame(const std::string& maze_filename)
     for (int r = 0; r < grid_manager.GetRows(); ++r) {
         for (int c = 0; c < grid_manager.GetCols(); ++c) {
             if (grid_manager.GetCellType(r,c) == static_cast<int>(CellType::PATH) || 
-                (grid_manager.GetCellType(r,c) == static_cast<int>(CellType::ALTERNATING_WALL) && (0 % 2 == 0)) ) { // Asumiendo que el turno 0 es par para ALTERNATING_WALL
-                // Considerar DYNAMIC_WALL si turns_to_open es 0 inicialmente (aunque LoadMaze las convierte a PATH)
+                (grid_manager.GetCellType(r,c) == static_cast<int>(CellType::ALTERNATING_WALL) && (0 % 2 == 0)) ) {
                 player.Move(r,c);
                 found_start = true;
                 break;
@@ -61,22 +59,17 @@ void Game::CalculateMazeRenderOffsets()
 {
     if (grid_manager.GetRows() == 0 || grid_manager.GetCols() == 0) return;
 
-    float total_maze_width = (grid_manager.GetCols() - 0.5f) * PENTAGON_DX; // Aproximación considerando el offset
-    float total_maze_height = (grid_manager.GetRows() -1 ) * PENTAGON_DY + PENTAGON_RADIUS * 2; // Alto total
+    float total_maze_width = (grid_manager.GetCols() - 0.5f) * PENTAGON_DX;
+    float total_maze_height = (grid_manager.GetRows() -1 ) * PENTAGON_DY + PENTAGON_RADIUS * 2;
 
-    float drawable_screen_width = SCREEN_WIDTH - 230; // UI panel width
+    float drawable_screen_width = SCREEN_WIDTH - 230;
     
     maze_render_start_x = 230 + (drawable_screen_width - total_maze_width) / 2.0f;
-    // Asegurar que el inicio X no sea menor que el ancho del panel UI si el laberinto es muy ancho
     if (total_maze_width > drawable_screen_width) maze_render_start_x = 230 + PENTAGON_RADIUS;
-
 
     maze_render_start_y = (SCREEN_HEIGHT - total_maze_height) / 2.0f;
     if (total_maze_height > SCREEN_HEIGHT) maze_render_start_y = PENTAGON_RADIUS;
-
-
 }
-
 
 void Game::Run()
 {
@@ -106,42 +99,42 @@ void Game::ProcessInput()
         int next_player_col = current_player_col;
         bool player_attempted_move = false;
 
-        // TODO: Implementar movimiento pentagonal (Q,W,E,A,D)
-        // Por ahora, mantenemos el movimiento cardinal simple y lo adaptaremos.
-        // El movimiento cardinal simple NO FUNCIONARÁ BIEN con el layout hexagonal de pentágonos.
-        // Se necesita definir cómo las teclas cardinales se mapean a los 5 vecinos.
-
-        if (IsKeyPressed(KEY_RIGHT)) { 
-            // Moverse a la derecha en la misma fila
-            next_player_col++; 
-            player_attempted_move = true;
-        } else if (IsKeyPressed(KEY_LEFT)) {
-            // Moverse a la izquierda en la misma fila
-            next_player_col--;
-            player_attempted_move = true;
-        } else if (IsKeyPressed(KEY_UP)) { 
-            // Esto es más complicado. Depende de si la fila actual es par o impar
-            // y a cuál de los dos vecinos superiores (o uno si es el borde) se quiere mover.
-            // Para un sistema de 5 direcciones, necesitaremos teclas dedicadas (QWEAD).
-            // TEMPORALMENTE: KEY_UP podría ir al vecino superior-derecha en filas pares, superior-izquierda en filas impares.
-            next_player_row--;
-            if (current_player_row % 2 == 0) { // Fila par (punta arriba), moviendo hacia arriba
-                // next_player_col se mantiene o aumenta (para sup-der)
-            } else { // Fila impar (punta abajo), moviendo hacia arriba
-                 next_player_col--; // para sup-izq
+        if (current_player_row % 2 == 0) { // Fila PAR (pentágono punta arriba)
+            if (IsKeyPressed(KEY_Q)) { // Arriba-Izquierda (NW)
+                next_player_row--;
+                next_player_col--;
+                player_attempted_move = true;
+            } else if (IsKeyPressed(KEY_W)) { // Arriba-Derecha (NE)
+                next_player_row--;
+                player_attempted_move = true;
+            } else if (IsKeyPressed(KEY_A)) { // Izquierda (W)
+                next_player_col--;
+                player_attempted_move = true;
+            } else if (IsKeyPressed(KEY_D)) { // Derecha (E)
+                next_player_col++;
+                player_attempted_move = true;
+            } else if (IsKeyPressed(KEY_X)) { // Abajo (S)
+                next_player_row++;
+                player_attempted_move = true;
             }
-            player_attempted_move = true;
-
-        } else if (IsKeyPressed(KEY_DOWN)) {
-            // Similarmente complicado.
-            // TEMPORALMENTE: KEY_DOWN podría ir al vecino inferior-derecha en filas pares, inferior-izquierda en filas impares.
-            next_player_row++;
-            if (current_player_row % 2 == 0) { // Fila par (punta arriba), moviendo hacia abajo
-                // next_player_col se mantiene o aumenta (para inf-der)
-            } else { // Fila impar (punta abajo), moviendo hacia abajo
-                next_player_col--; // para inf-izq
+        } else { // Fila IMPAR (pentágono punta abajo)
+            if (IsKeyPressed(KEY_W)) { // Arriba (N)
+                next_player_row--;
+                player_attempted_move = true;
+            } else if (IsKeyPressed(KEY_A)) { // Izquierda (W)
+                next_player_col--;
+                player_attempted_move = true;
+            } else if (IsKeyPressed(KEY_D)) { // Derecha (E)
+                next_player_col++;
+                player_attempted_move = true;
+            } else if (IsKeyPressed(KEY_Z)) { // Abajo-Izquierda (SW)
+                next_player_row++;
+                player_attempted_move = true;
+            } else if (IsKeyPressed(KEY_C)) { // Abajo-Derecha (SE)
+                next_player_row++;
+                next_player_col++;
+                player_attempted_move = true;
             }
-            player_attempted_move = true;
         }
 
         if (player_attempted_move)
@@ -185,7 +178,6 @@ void Game::ProcessInput()
 
 void Game::Update()
 {
-    // Lógica de actualización principal movida a ProcessInput post-movimiento.
 }
 
 void Game::Render()
@@ -194,11 +186,9 @@ void Game::Render()
 
     renderer.DrawGrid(grid_manager, current_turn, maze_render_start_x, maze_render_start_y);
     
-    // Pasar player.GetRow() para la rotación correcta del pentágono de la entidad
     renderer.DrawEntity(player, player.GetRow(), maze_render_start_x, maze_render_start_y, 0.8f, PLAYER_GREEN, "TÚ");
     
     if (clone.IsActive()) {
-        // Pasar clone.GetRow() para la rotación correcta del pentágono de la entidad
         renderer.DrawEntity(clone, clone.GetRow(), maze_render_start_x, maze_render_start_y, 0.6f, CLONE_BLUE, "CLON");
     }
 

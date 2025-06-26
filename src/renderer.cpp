@@ -110,9 +110,10 @@ void Renderer::DrawUI(int current_turn, GameState game_state) const {
     DrawText(TextFormat("Turno: %d", current_turn), 20, 60, 18, TEXT_WHITE);
     
     DrawText("Controles:", 20, 100, 18, TEXT_WHITE);
-    DrawText("- Flechas: Mover", 20, 130, 16, TEXT_WHITE);
-    DrawText("- S: Mostrar/Ocultar Solución", 20, 150, 16, TEXT_WHITE);
-    DrawText("- Q,W,E,A,D: Mover (pentagonal)", 20, 170, 16, TEXT_WHITE); // Placeholder para nuevos controles
+    DrawText("- A, D: Izquierda, Derecha", 20, 130, 16, TEXT_WHITE);
+    DrawText("- Q, W, E: Mov. Arriba", 20, 150, 16, TEXT_WHITE);
+    DrawText("- Z, X, C: Mov. Abajo", 20, 170, 16, TEXT_WHITE);
+    DrawText("- S: Mostrar/Ocultar Solución", 20, 190, 16, TEXT_WHITE); // Ajustar Y
     
     DrawText("Objetivo:", 20, 210, 18, TEXT_WHITE); // Ajustado Y
     DrawText("- Alcanza la esquina inferior derecha.", 20, 240, 14, GRAY); // Ajustado Y
