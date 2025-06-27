@@ -182,60 +182,46 @@ bool GridManager::IsCellOpenForPathfinding(
                 return true; 
             }
         }
-        // Si una celda está marcada como DYNAMIC_WALL en grid_data pero no está en
-        // dynamic_walls_list, es un estado inesperado. Asumir que está cerrada por seguridad.
-        // O, si ya se abrió (turns_to_open <=0) y grid_data fue actualizada a PATH, esta condición no se cumple.
-        // Si grid_data[r][c] es DYNAMIC_WALL, significa que UpdateDynamicWalls aún no la ha cambiado a PATH.
+        
         return false; 
     }
     // Es PATH u otro tipo caminable
     return true;
 }
 
+// Fragmento para vecinos en grid_manager.cpp
 std::vector<Position> GridManager::CalculateShortestPath(Position start_pos, Position end_pos, int current_turn_for_calc) const
 {
     std::vector<Position> path;
     if (num_rows == 0 || num_cols == 0) return path;
     if (start_pos.first < 0 || start_pos.first >= num_rows || start_pos.second < 0 || start_pos.second >= num_cols ||
         end_pos.first < 0 || end_pos.first >= num_rows || end_pos.second < 0 || end_pos.second >= num_cols) {
-        // Start o end position están fuera de los límites
         return path;
     }
-    
-    if (start_pos == end_pos)
-    {
-        // No necesitamos verificar si start_pos es caminable aquí, IsCellOpenForPathfinding lo hará.
-        // Aunque si start == end, el camino es solo ese punto.
+
+    if (start_pos == end_pos) {
         path.push_back(start_pos);
         return path;
     }
 
     std::vector<std::vector<bool>> visited(num_rows, std::vector<bool>(num_cols, false));
     std::vector<std::vector<Position>> predecessor(num_rows, std::vector<Position>(num_cols, {-1, -1}));
-    std::queue<std::tuple<int, int, int>> q; // r, c, turn_at_this_cell
-
-    // Importante: Usar una copia de dynamic_walls_list como estaba al INICIO del cálculo del BFS.
-    // Esto es porque el estado de estas paredes para la predicción del camino no debe cambiar
-    // durante la ejecución de ESTE cálculo de BFS.
+    std::queue<std::tuple<int, int, int>> q;
     std::vector<DynamicWall> dynamic_walls_snapshot = dynamic_walls_list;
 
-    // Verificar si la celda de inicio es válida EN EL MOMENTO DE INICIAR EL BFS (current_turn_for_calc)
-    if (!IsCellOpenForPathfinding(start_pos.first, start_pos.second, grid_data, visited, dynamic_walls_snapshot, current_turn_for_calc, current_turn_for_calc))
-    {
-        return path; // Posición inicial no es transitable en el turno actual.
+    if (!IsCellOpenForPathfinding(start_pos.first, start_pos.second, grid_data, visited, dynamic_walls_snapshot, current_turn_for_calc, current_turn_for_calc)) {
+        return path;
     }
 
     q.push({start_pos.first, start_pos.second, current_turn_for_calc});
     visited[start_pos.first][start_pos.second] = true;
 
     bool found_path = false;
-    while (!q.empty())
-    {
+    while (!q.empty()) {
         auto [r, c, turn_at_current_cell] = q.front();
         q.pop();
 
-        if (r == end_pos.first && c == end_pos.second)
-        {
+        if (r == end_pos.first && c == end_pos.second) {
             found_path = true;
             break;
         }
@@ -243,35 +229,29 @@ std::vector<Position> GridManager::CalculateShortestPath(Position start_pos, Pos
         int next_turn_for_neighbor = turn_at_current_cell + 1;
 
         std::vector<Position> potential_neighbors;
-        if (r % 2 == 0) { // Fila PAR (punta arriba ^)
+        if (r % 2 == 0) {
             potential_neighbors = {
-                {r - 1, c},     // Superior Derecha (NE)
-                {r - 1, c - 1}, // Superior Izquierda (NW)
-                {r, c + 1},     // Derecha (E)
-                {r, c - 1},     // Izquierda (W)
-                {r + 1, c}      // Inferior Central (hacia SE en hexagonal, pero es el central para pentágono punta arriba)
+                {r - 1, c},
+                {r, c - 1},
+                {r, c + 1},
+                {r + 1, c - 1},
+                {r + 1, c}
             };
-        } else { // Fila IMPAR (punta abajo v)
+        } else {
             potential_neighbors = {
-                {r, c + 1},     // Derecha (E)
-                {r, c - 1},     // Izquierda (W)
-                {r + 1, c + 1}, // Inferior Derecha (SE)
-                {r + 1, c},     // Inferior Izquierda (SW)
-                {r - 1, c}      // Superior Central (hacia NW en hexagonal, pero es el central para pentágono punta abajo)
-                                // Si (r-1,c) es el central superior para impar, el otro candidato sería (r-1,c+1) (NE)
-                                // Mi definición anterior fue: {r-1,c} (NC) y {r-1,c+1} (NE) para arriba, omitiendo uno.
-                                // La actual es (r-1,c).
+                {r + 1, c},
+                {r, c - 1},
+                {r, c + 1},
+                {r - 1, c - 1},
+                {r - 1, c}
             };
         }
 
-        for (const auto& move : potential_neighbors)
-        {
+        for (const auto& move : potential_neighbors) {
             int nr = move.first;
             int nc = move.second;
 
-            // La validación de límites y visitados se hace en IsCellOpenForPathfinding
-            if (IsCellOpenForPathfinding(nr, nc, grid_data, visited, dynamic_walls_snapshot, next_turn_for_neighbor, current_turn_for_calc))
-            {
+            if (IsCellOpenForPathfinding(nr, nc, grid_data, visited, dynamic_walls_snapshot, next_turn_for_neighbor, current_turn_for_calc)) {
                 visited[nr][nc] = true;
                 predecessor[nr][nc] = {r, c};
                 q.push({nr, nc, next_turn_for_neighbor});
@@ -279,16 +259,13 @@ std::vector<Position> GridManager::CalculateShortestPath(Position start_pos, Pos
         }
     }
 
-    if (found_path)
-    {
+    if (found_path) {
         Position current_pos_in_path = end_pos;
-        while (current_pos_in_path.first != -1 && current_pos_in_path.second != -1 && current_pos_in_path != start_pos)
-        {
+        while (current_pos_in_path.first != -1 && current_pos_in_path.second != -1 && current_pos_in_path != start_pos) {
             path.push_back(current_pos_in_path);
             current_pos_in_path = predecessor[current_pos_in_path.first][current_pos_in_path.second];
-             if (path.size() > num_rows * num_cols) { // Safety break para evitar bucles infinitos si hay error en predecessor
-                std::cerr << "Error: Path reconstruction parece estar en un bucle." << std::endl;
-                return {}; // Retornar camino vacío
+            if (path.size() > num_rows * num_cols) {
+                return {};
             }
         }
         path.push_back(start_pos);

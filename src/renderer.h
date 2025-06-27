@@ -20,7 +20,8 @@ public:
     // Se pasa la fila de la entidad para determinar su rotación.
     void DrawEntity(const Entity& entity, int entity_row, float start_x, float start_y, float radius_scale, Color color, const std::string& label) const;
     void DrawPath(const std::vector<Position>& path, float start_x, float start_y, float radius_scale, Color color) const;
-    void DrawUI(int current_turn, GameState game_state) const;
+    void DrawUI(int current_turn, GameState game_state, Position player_pos, Position clone_pos) const;
+
 
 private:
     // Modificado para aceptar rotación

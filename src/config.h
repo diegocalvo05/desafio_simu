@@ -5,11 +5,12 @@
 #include <string>
 
 // Constantes del juego
-constexpr int SCREEN_WIDTH = 900;
-constexpr int SCREEN_HEIGHT = 600;
+constexpr int SCREEN_WIDTH = 1500;
+constexpr int SCREEN_HEIGHT = 900;
 constexpr int CLONE_ACTIVATION_TURNS = 6;
-constexpr float PENTAGON_RADIUS = 45.0f;
-constexpr float PENTAGON_DX = PENTAGON_RADIUS * 1.8f;
+constexpr int UI_PANEL_WIDTH = 300;
+constexpr float PENTAGON_RADIUS = 40.0f;
+constexpr float PENTAGON_DX = PENTAGON_RADIUS * 2.0f;
 constexpr float PENTAGON_DY = PENTAGON_RADIUS * 1.5f;
 
 // Colores (podrían moverse a una clase Renderer o UI si se vuelven más complejos)

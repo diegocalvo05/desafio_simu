@@ -1,46 +1,40 @@
 #include "renderer.h"
-#include "config.h" // Para colores y constantes de pentágono
+#include "config.h"
 #include <raylib.h>
 #include <vector>
 #include <cmath>
 
-namespace { // Espacio anónimo para helpers locales a este archivo
-    // Función para dibujar pentágono con forma de casa
+namespace {
     void DrawLocalPentagon(Vector2 center, float radius, float rotation, Color color) {
-        std::vector<Vector2> vertices(5);
-        
-        // Definir vértices para forma de casa (pentágono regular pero orientado)
-        float half_width = radius * 0.9f;   // Ancho de la base
-        float base_height = radius * 0.6f;  // Altura de la parte inferior
-        float roof_height = radius * 0.9f;  // Altura total hasta la punta
-        
-        // Vértices de la forma de casa (sin rotación)
+        std::vector<Vector2> vertices(6);
+
+        float half_width = radius * 0.9f;
+        float base_height = radius * 0.6f;
+        float roof_height = radius * 0.9f;
+
         Vector2 base_vertices[] = {
-            {0, -roof_height},              // Punta del techo (arriba)
-            {half_width, -base_height * 0.3f}, // Esquina derecha del techo
-            {half_width, base_height},      // Esquina inferior derecha
-            {-half_width, base_height},     // Esquina inferior izquierda
-            {-half_width, -base_height * 0.3f} // Esquina izquierda del techo
+            {0, -roof_height},
+            {half_width, -base_height * 0.3f},
+            {half_width, base_height},
+            {-half_width, base_height},
+            {-half_width, -base_height * 0.3f}
         };
-        
-        // Aplicar rotación
+
         float rot_rad = rotation * DEG2RAD;
         float cos_rot = cosf(rot_rad);
         float sin_rot = sinf(rot_rad);
-        
+
         for (int i = 0; i < 5; i++) {
             float x = base_vertices[i].x;
             float y = base_vertices[i].y;
-            
-            // Rotar y trasladar al centro
+
             vertices[i].x = center.x + (x * cos_rot - y * sin_rot);
             vertices[i].y = center.y + (x * sin_rot + y * cos_rot);
         }
-        
-        // Dibujar el pentágono relleno
+
         DrawTriangleFan(vertices.data(), 5, color);
         
-        // Dibujar un contorno sutil
+
         Color outline_color = ColorBrightness(color, -0.15f);
         for (int i = 0; i < 5; i++) {
             int next = (i + 1) % 5;
@@ -67,7 +61,6 @@ void Renderer::EndDrawingSequence() {
     EndDrawing();
 }
 
-// Implementación del método de clase modificado
 void Renderer::DrawPentagonCell(Vector2 center, float radius, float rotation, Color color) const {
     DrawLocalPentagon(center, radius, rotation, color);
 }
@@ -75,18 +68,17 @@ void Renderer::DrawPentagonCell(Vector2 center, float radius, float rotation, Co
 void Renderer::DrawGrid(const GridManager& grid, int current_turn, float start_x, float start_y) const {
     for (int r = 0; r < grid.GetRows(); ++r) {
         for (int c = 0; c < grid.GetCols(); ++c) {
-            float pent_center_x = start_x + c * PENTAGON_DX + (r % 2) * (PENTAGON_DX / 2.0f);
+            float offset = ((r / 2) % 2 == 0) ? 0.0f : PENTAGON_DX / 2.0f;
+            float pent_center_x = start_x + c * PENTAGON_DX + offset;
             float pent_center_y = start_y + r * PENTAGON_DY;
-            
-            Color cell_color = RAYWHITE; // Color por defecto para PATH
+
+            Color cell_color = RAYWHITE;
             int cell_type_val = grid.grid_data[r][c];
 
             if (cell_type_val == static_cast<int>(CellType::WALL)) {
                 cell_color = WALL_GRAY;
             } else if (cell_type_val == static_cast<int>(CellType::ALTERNATING_WALL)) {
                 cell_color = (current_turn % 2 == 0) ? EVEN_CELL_COLOR : ODD_CELL_COLOR;
-            } else if (cell_type_val == static_cast<int>(CellType::PATH)) {
-                 // Ya es RAYWHITE por defecto
             } else if (cell_type_val == static_cast<int>(CellType::DYNAMIC_WALL)) {
                 bool found_in_dynamic_list = false;
                 for (const auto& dw : grid.dynamic_walls_list) {
@@ -100,28 +92,26 @@ void Renderer::DrawGrid(const GridManager& grid, int current_turn, float start_x
                     }
                 }
                 if (!found_in_dynamic_list) {
-                    cell_color = RAYWHITE; // Abierta o inconsistente, dibujar como abierta
+                    cell_color = RAYWHITE;
                 }
             }
-            
-            // Determinar rotación basado en la fila - ajustado para la forma de casa
-            float rotation = (r % 2 == 0) ? 180.0f : 0.0f; // Fila par: punta abajo, Fila impar: punta arriba
+
+            float rotation = (r % 2 == 0) ? 0.0f : 180.0f;
             DrawPentagonCell({pent_center_x, pent_center_y}, PENTAGON_RADIUS, rotation, cell_color);
         }
     }
 }
 
-// Modificado para tomar entity_row para la rotación
 void Renderer::DrawEntity(const Entity& entity, int entity_row, float start_x, float start_y, float radius_scale, Color color, const std::string& label) const {
     if (!entity.IsActive()) return;
 
-    float entity_center_x = start_x + entity.GetCol() * PENTAGON_DX + (entity_row % 2) * (PENTAGON_DX / 2.0f);
+    float offset = ((entity_row / 2) % 2 == 0) ? 0.0f : PENTAGON_DX / 2.0f;
+    float entity_center_x = start_x + entity.GetCol() * PENTAGON_DX + offset;
     float entity_center_y = start_y + entity_row * PENTAGON_DY;
 
-    // Determinar rotación basado en la fila de la entidad - ajustado para forma de casa
-    float rotation = (entity_row % 2 == 0) ? 180.0f : 0.0f;
+    float rotation = (entity_row % 2 == 1) ? 180.0f : 0.0f;
     DrawPentagonCell({entity_center_x, entity_center_y}, PENTAGON_RADIUS * radius_scale, rotation, color);
-    
+
     if (!label.empty()) {
         DrawText(label.c_str(), 
                  entity_center_x - MeasureText(label.c_str(), 14) / 2.0f,
@@ -131,35 +121,42 @@ void Renderer::DrawEntity(const Entity& entity, int entity_row, float start_x, f
 }
 
 void Renderer::DrawPath(const std::vector<Position>& path, float start_x, float start_y, float radius_scale, Color color) const {
-    for (const auto& p : path) { // p es Position {fila, columna}
+    for (const auto& p : path) {
         int path_row = p.first;
         int path_col = p.second;
-        float pent_center_x = start_x + path_col * PENTAGON_DX + (path_row % 2) * (PENTAGON_DX / 2.0f);
+        float offset = ((path_row / 2) % 2 == 0) ? 0.0f : PENTAGON_DX / 2.0f;
+        float pent_center_x = start_x + path_col * PENTAGON_DX + offset;
         float pent_center_y = start_y + path_row * PENTAGON_DY;
-        
-        // Determinar rotación basado en la fila del camino - ajustado para forma de casa
-        float rotation = (path_row % 2 == 0) ? 180.0f : 0.0f;
+
+        float rotation = (path_row % 2 == 1) ? 180.0f : 0.0f;
         DrawPentagonCell({pent_center_x, pent_center_y}, PENTAGON_RADIUS * radius_scale, rotation, color);
     }
 }
 
-void Renderer::DrawUI(int current_turn, GameState game_state) const {
-    DrawRectangle(0, 0, 230, SCREEN_HEIGHT, UI_PANEL_COLOR);
+void Renderer::DrawUI(int current_turn, GameState game_state, Position player_pos, Position clone_pos) const
+ {
+    DrawRectangle(0, 0, UI_PANEL_WIDTH, SCREEN_HEIGHT, UI_PANEL_COLOR);
     DrawText("ESCAPE THE GRID", 20, 20, 22, ACCENT_BLUE);
     DrawText(TextFormat("Turno: %d", current_turn), 20, 60, 18, TEXT_WHITE);
-    
+
     DrawText("Controles:", 20, 100, 18, TEXT_WHITE);
     DrawText("- A, D: Izquierda, Derecha", 20, 130, 16, TEXT_WHITE);
     DrawText("- Q, W, E: Mov. Arriba", 20, 150, 16, TEXT_WHITE);
     DrawText("- Z, X, C: Mov. Abajo", 20, 170, 16, TEXT_WHITE);
-    DrawText("- S: Mostrar/Ocultar Solución", 20, 190, 16, TEXT_WHITE);
-    
+    DrawText("- S: Mostrar/Ocultar Soluci\xC3\xB3n", 20, 190, 16, TEXT_WHITE);
+
     DrawText("Objetivo:", 20, 210, 18, TEXT_WHITE);
     DrawText("- Alcanza la esquina inferior derecha.", 20, 240, 14, GRAY);
     DrawText("- Evita al Clon.", 20, 260, 14, GRAY);
 
     if (game_state == GameState::GAME_OVER) {
+    if (player_pos == clone_pos) {
+        DrawText("GAME OVER", 20, SCREEN_HEIGHT / 2.0f + 40, 22, RED);
+    } else {
         DrawText("¡HAS ESCAPADO!", 20, SCREEN_HEIGHT / 2.0f + 40, 22, PLAYER_GREEN);
     }
-     DrawText("R: Reiniciar", 20, SCREEN_HEIGHT - 40, 16, TEXT_WHITE);
 }
+
+    DrawText("R: Reiniciar", 20, SCREEN_HEIGHT - 40, 16, TEXT_WHITE);
+}
+
