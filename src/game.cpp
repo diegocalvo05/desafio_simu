@@ -1,5 +1,6 @@
 #include "game.h"
 #include "config.h"
+#include "config.h"
 #include <iostream>
 
 Game::Game(const std::string& maze_filename)

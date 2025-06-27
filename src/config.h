@@ -9,8 +9,8 @@ constexpr int SCREEN_WIDTH = 900;
 constexpr int SCREEN_HEIGHT = 600;
 constexpr int CLONE_ACTIVATION_TURNS = 6;
 constexpr float PENTAGON_RADIUS = 45.0f;
-constexpr float PENTAGON_DX = PENTAGON_RADIUS * 1.5f;
-constexpr float PENTAGON_DY = PENTAGON_RADIUS * 1.3f;
+constexpr float PENTAGON_DX = PENTAGON_RADIUS * 1.8f;
+constexpr float PENTAGON_DY = PENTAGON_RADIUS * 1.5f;
 
 // Colores (podrían moverse a una clase Renderer o UI si se vuelven más complejos)
 const Color DARK_GREEN = {30, 35, 40, 255};
