@@ -20,10 +20,10 @@ const Color TEXT_WHITE = {240, 240, 240, 255};
 const Color ACCENT_BLUE = {102, 204, 255, 255};
 const Color PLAYER_GREEN = {0, 200, 120, 255};
 const Color CLONE_BLUE = {90, 120, 250, 255};
-const Color WALL_GRAY = {100, 100, 100, 255};
+const Color WALL_GRAY = {102, 204, 255, 255};
 const Color DYNAMIC_WALL_COLOR = {60, 60, 60, 255};
-const Color EVEN_CELL_COLOR = {70, 140, 255, 255};
-const Color ODD_CELL_COLOR = {255, 210, 50, 255};
+const Color EVEN_CELL_COLOR = {0, 200, 100, 255}; // Verde vivo y legible
+const Color ODD_CELL_COLOR = {220, 60, 60, 255}; // Rojo fuerte, sin saturar
 const Color PATH_SOLUTION_COLOR = ACCENT_BLUE;
 
 

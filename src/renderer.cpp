@@ -4,9 +4,11 @@
 #include <vector>
 #include <cmath>
 
+// MultipleFiles/renderer.cpp
+
 namespace {
     void DrawLocalPentagon(Vector2 center, float radius, float rotation, Color color) {
-        std::vector<Vector2> vertices(6);
+        std::vector<Vector2> vertices(6); // Se usa 6 pero solo se llenan 5
 
         float half_width = radius * 0.9f;
         float base_height = radius * 0.6f;
@@ -32,16 +34,19 @@ namespace {
             vertices[i].y = center.y + (x * sin_rot + y * cos_rot);
         }
 
+        // Esta línea dibuja el pentágono relleno con el color proporcionado.
         DrawTriangleFan(vertices.data(), 5, color);
         
-
-        Color outline_color = ColorBrightness(color, -0.15f);
+        // Esta parte dibuja el contorno. Si quieres un color completamente sólido sin contorno,
+        // puedes comentar o eliminar estas líneas.
+        Color outline_color = ColorBrightness(color, -0.15f); // Hace el contorno un poco más oscuro
         for (int i = 0; i < 5; i++) {
             int next = (i + 1) % 5;
             DrawLineV(vertices[i], vertices[next], outline_color);
         }
     }
 }
+
 
 Renderer::Renderer(int screen_w, int screen_h, const std::string& window_title) {
     InitWindow(screen_w, screen_h, window_title.c_str());
@@ -78,7 +83,7 @@ void Renderer::DrawGrid(const GridManager& grid, int current_turn, float start_x
             if (cell_type_val == static_cast<int>(CellType::WALL)) {
                 cell_color = WALL_GRAY;
             } else if (cell_type_val == static_cast<int>(CellType::ALTERNATING_WALL)) {
-                cell_color = (current_turn % 2 == 0) ? EVEN_CELL_COLOR : ODD_CELL_COLOR;
+                cell_color = (current_turn % 2 == 0) ? ODD_CELL_COLOR : EVEN_CELL_COLOR;
             } else if (cell_type_val == static_cast<int>(CellType::DYNAMIC_WALL)) {
                 bool found_in_dynamic_list = false;
                 for (const auto& dw : grid.dynamic_walls_list) {
@@ -98,9 +103,18 @@ void Renderer::DrawGrid(const GridManager& grid, int current_turn, float start_x
 
             float rotation = (r % 2 == 0) ? 0.0f : 180.0f;
             DrawPentagonCell({pent_center_x, pent_center_y}, PENTAGON_RADIUS, rotation, cell_color);
+
+            if (r == 0 && c == 0) {
+                DrawCircle(pent_center_x, pent_center_y, 8, GREEN);
+            }
+
+            if (r == grid.GetRows() - 1 && c == grid.GetCols() - 1) {
+                DrawCircle(pent_center_x, pent_center_y, 8, RED);
+            }
         }
     }
 }
+
 
 void Renderer::DrawEntity(const Entity& entity, int entity_row, float start_x, float start_y, float radius_scale, Color color, const std::string& label) const {
     if (!entity.IsActive()) return;
