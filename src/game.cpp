@@ -85,42 +85,49 @@ void Game::Run()
 
 void Game::ProcessInput()
 {
-    if (current_game_state == GameState::PLAYING)
-    {
-        int current_player_row = player.GetRow();
-        int current_player_col = player.GetCol();
-        int next_player_row = current_player_row;
-        int next_player_col = current_player_col;
 
-        if (current_player_row % 2 == 1) {
-            if (IsKeyPressed(KEY_W)) {
-                next_player_row--;
-            } else if (IsKeyPressed(KEY_A)) {
-                next_player_col--;
-            } else if (IsKeyPressed(KEY_D)) {
-                next_player_col++;
-            } else if (IsKeyPressed(KEY_Z)) {
-                next_player_row++;
-                next_player_col--;
-            } else if (IsKeyPressed(KEY_C)) {
-                next_player_row++;
-                next_player_col++;
-            }
-        } else {
-            if (IsKeyPressed(KEY_X)) {
-                next_player_row++;
-            } else if (IsKeyPressed(KEY_A)) {
-                next_player_col--;
-            } else if (IsKeyPressed(KEY_D)) {
-                next_player_col++;
-            } else if (IsKeyPressed(KEY_Q)) {
-                next_player_row--;
-                next_player_col--;
-            } else if (IsKeyPressed(KEY_E)) {
-                next_player_row--;
-                next_player_col++;
-            }
+
+    if (current_game_state == GameState::PLAYING){
+    auto IsOffsetPair = [](int row) {
+        return ((row / 2) % 2 == 1);
+    };
+
+    int current_player_row = player.GetRow();
+    int current_player_col = player.GetCol();
+    int next_player_row = current_player_row;
+    int next_player_col = current_player_col;
+
+    if (current_player_row % 2 == 1) {
+        // Fila impar (pico abajo)
+        if (IsKeyPressed(KEY_W)) {
+            next_player_row--;
+        } else if (IsKeyPressed(KEY_A)) {
+            next_player_col--;
+        } else if (IsKeyPressed(KEY_D)) {
+            next_player_col++;
+        } else if (IsKeyPressed(KEY_Z)) {
+            next_player_row++;
+            next_player_col -= IsOffsetPair(current_player_row + 1) ? 1 : 0;  // ↙ CORREGIDO
+        } else if (IsKeyPressed(KEY_C)) {
+            next_player_row++;
+            next_player_col += IsOffsetPair(current_player_row + 1) ? 0 : 1;  // ↘ ya corregido
         }
+    } else {
+        // Fila par (pico arriba)
+        if (IsKeyPressed(KEY_X)) {
+            next_player_row++;
+        } else if (IsKeyPressed(KEY_A)) {
+            next_player_col--;
+        } else if (IsKeyPressed(KEY_D)) {
+            next_player_col++;
+        } else if (IsKeyPressed(KEY_Q)) {
+            next_player_row--;
+            next_player_col -= IsOffsetPair(current_player_row - 1) ? 1 : 0;
+        } else if (IsKeyPressed(KEY_E)) {
+            next_player_row--;
+            next_player_col += IsOffsetPair(current_player_row - 1) ? 0 : 1;  // ↗ ya corregido
+        }
+    }
 
         bool player_attempted_move = (next_player_row != current_player_row || next_player_col != current_player_col);
 
