@@ -1,14 +1,14 @@
 #pragma once
 
-#include "config.h" // Para MazeGrid, DynamicWall, CellType, Position
+#include "config.h" 
 #include <vector>
 #include <string>
-#include <utility> // Para std::pair
+#include <utility> 
 
 class GridManager
 {
 public:
-    MazeGrid grid_data; // Los datos crudos del laberinto (0, 1, 2, 3)
+    MazeGrid grid_data; 
     std::vector<DynamicWall> dynamic_walls_list;
     int num_rows;
     int num_cols;

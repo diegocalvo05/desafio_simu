@@ -37,7 +37,7 @@ bool GridManager::LoadMaze(const std::string &filename)
             row_vec.push_back(cell_val);
             if (cell_val == static_cast<int>(CellType::DYNAMIC_WALL))
             {
-                dynamic_walls_list.push_back({r_idx, c_idx, 3, CellType::DYNAMIC_WALL}); // TODO: Hacer configurable turns_to_open
+                dynamic_walls_list.push_back({r_idx, c_idx, 3, CellType::DYNAMIC_WALL}); 
             }
             c_idx++;
         }
@@ -73,35 +73,22 @@ int GridManager::GetCellType(int r, int c) const
 
 bool GridManager::IsCellWalkable(int r, int c, int current_turn, bool is_player, Position clone_pos, bool clone_is_active) const
 {
-    if (r < 0 || r >= num_rows || c < 0 || c >= num_cols)
-    {
-        return false; 
-    }
+    if (r < 0 || r >= num_rows || c < 0 || c >= num_cols) return false; 
 
-    if (is_player && clone_is_active && r == clone_pos.first && c == clone_pos.second)
-    {
-        return false;
-    }
+    if (is_player && clone_is_active && r == clone_pos.first && c == clone_pos.second) return false;
 
     int cell_type_val = grid_data[r][c];
 
-    if (cell_type_val == static_cast<int>(CellType::WALL))
-    {
-        return false;
-    }
+    if (cell_type_val == static_cast<int>(CellType::WALL)) return false;    
 
-    if (cell_type_val == static_cast<int>(CellType::ALTERNATING_WALL))
-    {
-        return (current_turn % 2 == 0);
-    }
-
+    if (cell_type_val == static_cast<int>(CellType::ALTERNATING_WALL)) return (current_turn % 2 == 0);
+    
     if (cell_type_val == static_cast<int>(CellType::DYNAMIC_WALL))
     {
         for (const auto &dw : dynamic_walls_list)
         {
             if (dw.row == r && dw.col == c)
             {
-                // Esta lógica es para el estado actual. Para BFS, IsCellOpenForPathfinding tiene la lógica predictiva.
                 return dw.turns_to_open <= 0; 
             }
         }
@@ -121,8 +108,6 @@ void GridManager::UpdateDynamicWalls(int current_turn)
             {
                 if (dw.row >= 0 && dw.row < num_rows && dw.col >= 0 && dw.col < num_cols)
                 {
-                    // Solo cambiar a PATH si todavía es DYNAMIC_WALL.
-                    // Podría haber sido alterada por otra lógica (aunque no en este juego).
                     if (grid_data[dw.row][dw.col] == static_cast<int>(CellType::DYNAMIC_WALL)) {
                         grid_data[dw.row][dw.col] = static_cast<int>(CellType::PATH);
                     }
@@ -134,62 +119,41 @@ void GridManager::UpdateDynamicWalls(int current_turn)
 
 bool GridManager::IsCellOpenForPathfinding(
     int r, int c,
-    const MazeGrid &current_grid_config, // Usar el grid_data actual
+    const MazeGrid &current_grid_config, 
     const std::vector<std::vector<bool>> &visited,
-    const std::vector<DynamicWall> &initial_dynamic_walls, // Estado de las paredes dinámicas al inicio del BFS
-    int turn_when_reaching_cell, // El turno en el que el BFS alcanzaría esta celda (r,c)
-    int start_turn_of_bfs // El turno del juego cuando se inició el BFS
+    const std::vector<DynamicWall> &initial_dynamic_walls, 
+    int turn_when_reaching_cell, 
+    int start_turn_of_bfs 
 ) const
 {
-    if (r < 0 || r >= num_rows || c < 0 || c >= num_cols || visited[r][c])
-    {
-        return false;
-    }
+    if (r < 0 || r >= num_rows || c < 0 || c >= num_cols || visited[r][c]) return false;
+    
 
     int cell_type_val = current_grid_config[r][c];
 
-    if (cell_type_val == static_cast<int>(CellType::WALL))
-    {
-        return false;
-    }
-    if (cell_type_val == static_cast<int>(CellType::ALTERNATING_WALL))
-    {
-        // La pared alternante está abierta si el turno en el que se llega a ella es par.
-        return (turn_when_reaching_cell % 2 == 0);
-    }
+    if (cell_type_val == static_cast<int>(CellType::WALL)) return false;
+    
+    if (cell_type_val == static_cast<int>(CellType::ALTERNATING_WALL))return (turn_when_reaching_cell % 2 == 0);
+    
     if (cell_type_val == static_cast<int>(CellType::DYNAMIC_WALL))
     {
-        // Encontrar la pared dinámica correspondiente en el estado inicial del BFS
         for (const auto &dw_initial_state : initial_dynamic_walls)
         {
             if (dw_initial_state.row == r && dw_initial_state.col == c)
             {
-                // turns_to_open_at_bfs_start es cuántos turnos le faltaban para abrirse
-                // CUANDO el BFS comenzó.
                 int turns_to_open_at_bfs_start = dw_initial_state.turns_to_open;
-                
-                // steps_taken_in_bfs es cuántos movimientos se han hecho dentro del BFS
-                // para llegar a esta celda (nr, nc) desde la celda inicial del BFS.
                 int steps_taken_in_bfs = turn_when_reaching_cell - start_turn_of_bfs;
-
-                // Si los turnos que le faltaban para abrirse al inicio del BFS
-                // son mayores que los pasos que se han dado para llegar a ella,
-                // entonces todavía no se habrá abierto.
                 if (turns_to_open_at_bfs_start > steps_taken_in_bfs) {
-                    return false; // Aún no se ha abierto cuando el camino llega aquí
+                    return false; 
                 }
-                // Si es menor o igual, ya se abrió o se abre justo en este paso.
                 return true; 
             }
         }
-        
         return false; 
     }
-    // Es PATH u otro tipo caminable
     return true;
 }
 
-// Fragmento para vecinos en grid_manager.cpp
 std::vector<Position> GridManager::CalculateShortestPath(Position start_pos, Position end_pos, int current_turn_for_calc) const
 {
     std::vector<Position> path;

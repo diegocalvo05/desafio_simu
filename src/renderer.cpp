@@ -8,7 +8,7 @@
 
 namespace {
     void DrawLocalPentagon(Vector2 center, float radius, float rotation, Color color) {
-        std::vector<Vector2> vertices(6); // Se usa 6 pero solo se llenan 5
+        std::vector<Vector2> vertices(6); 
 
         float half_width = radius * 0.9f;
         float base_height = radius * 0.6f;
@@ -34,12 +34,9 @@ namespace {
             vertices[i].y = center.y + (x * sin_rot + y * cos_rot);
         }
 
-        // Esta línea dibuja el pentágono relleno con el color proporcionado.
         DrawTriangleFan(vertices.data(), 5, color);
         
-        // Esta parte dibuja el contorno. Si quieres un color completamente sólido sin contorno,
-        // puedes comentar o eliminar estas líneas.
-        Color outline_color = ColorBrightness(color, -0.15f); // Hace el contorno un poco más oscuro
+        Color outline_color = ColorBrightness(color, -0.15f); 
         for (int i = 0; i < 5; i++) {
             int next = (i + 1) % 5;
             DrawLineV(vertices[i], vertices[next], outline_color);

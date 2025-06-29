@@ -2,7 +2,7 @@
 #include "config.h"
 #include <iostream>
 
-Game::Game(const std::string& maze_filename)
+Game::Game(const std::string &maze_filename)
     : player(0, 0),
       clone(-1, -1),
       renderer(SCREEN_WIDTH, SCREEN_HEIGHT, "Escape the Grid - Modular"),
@@ -17,28 +17,34 @@ Game::Game(const std::string& maze_filename)
 
 Game::~Game() {}
 
-void Game::InitializeGame(const std::string& maze_filename)
+void Game::InitializeGame(const std::string &maze_filename)
 {
-    if (!grid_manager.LoadMaze(maze_filename)) {
+    if (!grid_manager.LoadMaze(maze_filename))
+    {
         std::cerr << "Error crítico: No se pudo cargar el laberinto '" << maze_filename << "'." << std::endl;
         current_game_state = GameState::GAME_OVER;
         return;
     }
 
     bool found_start = false;
-    for (int r = 0; r < grid_manager.GetRows(); ++r) {
-        for (int c = 0; c < grid_manager.GetCols(); ++c) {
-            if (grid_manager.GetCellType(r,c) == static_cast<int>(CellType::PATH) || 
-                (grid_manager.GetCellType(r,c) == static_cast<int>(CellType::ALTERNATING_WALL) && (0 % 2 == 0))) {
-                player.Move(r,c);
+    for (int r = 0; r < grid_manager.GetRows(); ++r)
+    {
+        for (int c = 0; c < grid_manager.GetCols(); ++c)
+        {
+            if (grid_manager.GetCellType(r, c) == static_cast<int>(CellType::PATH) ||
+                (grid_manager.GetCellType(r, c) == static_cast<int>(CellType::ALTERNATING_WALL) && (0 % 2 == 0)))
+            {
+                player.Move(r, c);
                 found_start = true;
                 break;
             }
         }
-        if (found_start) break;
+        if (found_start)
+            break;
     }
 
-    if (!found_start) {
+    if (!found_start)
+    {
         std::cerr << "Error: No se encontró una posición inicial válida para el jugador." << std::endl;
         current_game_state = GameState::GAME_OVER;
         return;
@@ -53,31 +59,38 @@ void Game::InitializeGame(const std::string& maze_filename)
 
 void Game::CalculateMazeRenderOffsets()
 {
-    if (grid_manager.GetRows() == 0 || grid_manager.GetCols() == 0) return;
+    if (grid_manager.GetRows() == 0 || grid_manager.GetCols() == 0)
+        return;
 
     float total_maze_width = (grid_manager.GetCols() - 0.5f) * PENTAGON_DX;
     float total_maze_height = (grid_manager.GetRows() - 1) * PENTAGON_DY + PENTAGON_RADIUS * 2;
     float drawable_screen_width = SCREEN_WIDTH - UI_PANEL_WIDTH;
 
     maze_render_start_x = UI_PANEL_WIDTH + (drawable_screen_width - total_maze_width) / 2.0f;
-    if (total_maze_width > drawable_screen_width) maze_render_start_x = UI_PANEL_WIDTH + PENTAGON_RADIUS;
+    if (total_maze_width > drawable_screen_width)
+        maze_render_start_x = UI_PANEL_WIDTH + PENTAGON_RADIUS;
 
     maze_render_start_y = (SCREEN_HEIGHT - total_maze_height) / 2.0f;
-    if (total_maze_height > SCREEN_HEIGHT) maze_render_start_y = PENTAGON_RADIUS;
+    if (total_maze_height > SCREEN_HEIGHT)
+        maze_render_start_y = PENTAGON_RADIUS;
 }
 
 void Game::Run()
 {
-    while (!WindowShouldClose() && current_game_state != GameState::GAME_OVER) {
+    while (!WindowShouldClose() && current_game_state != GameState::GAME_OVER)
+    {
         ProcessInput();
-        if (current_game_state == GameState::PLAYING) {
+        if (current_game_state == GameState::PLAYING)
+        {
             Update();
         }
         Render();
     }
-    while (!WindowShouldClose() && current_game_state == GameState::GAME_OVER) {
+    while (!WindowShouldClose() && current_game_state == GameState::GAME_OVER)
+    {
         Render();
-        if (IsKeyPressed(KEY_R)) {
+        if (IsKeyPressed(KEY_R))
+        {
             InitializeGame("maze.txt");
         }
     }
@@ -86,48 +99,70 @@ void Game::Run()
 void Game::ProcessInput()
 {
 
+    if (current_game_state == GameState::PLAYING)
+    {
+        auto IsOffsetPair = [](int row)
+        {
+            return ((row / 2) % 2 == 1);
+        };
 
-    if (current_game_state == GameState::PLAYING){
-    auto IsOffsetPair = [](int row) {
-        return ((row / 2) % 2 == 1);
-    };
+        int current_player_row = player.GetRow();
+        int current_player_col = player.GetCol();
+        int next_player_row = current_player_row;
+        int next_player_col = current_player_col;
 
-    int current_player_row = player.GetRow();
-    int current_player_col = player.GetCol();
-    int next_player_row = current_player_row;
-    int next_player_col = current_player_col;
+        if (current_player_row % 2 == 1)
+        {
 
-    if (current_player_row % 2 == 1) {
-        // Fila impar (pico abajo)
-        if (IsKeyPressed(KEY_W)) {
-            next_player_row--;
-        } else if (IsKeyPressed(KEY_A)) {
-            next_player_col--;
-        } else if (IsKeyPressed(KEY_D)) {
-            next_player_col++;
-        } else if (IsKeyPressed(KEY_Z)) {
-            next_player_row++;
-            next_player_col -= IsOffsetPair(current_player_row + 1) ? 1 : 0;  // ↙ CORREGIDO
-        } else if (IsKeyPressed(KEY_C)) {
-            next_player_row++;
-            next_player_col += IsOffsetPair(current_player_row + 1) ? 0 : 1;  // ↘ ya corregido
+            if (IsKeyPressed(KEY_W))
+            {
+                next_player_row--;
+            }
+            else if (IsKeyPressed(KEY_A))
+            {
+                next_player_col--;
+            }
+            else if (IsKeyPressed(KEY_D))
+            {
+                next_player_col++;
+            }
+            else if (IsKeyPressed(KEY_Z))
+            {
+                next_player_row++;
+                next_player_col -= IsOffsetPair(current_player_row + 1) ? 1 : 0;
+            }
+            else if (IsKeyPressed(KEY_C))
+            {
+                next_player_row++;
+                next_player_col += IsOffsetPair(current_player_row + 1) ? 0 : 1;
+            }
         }
-    } else {
-        // Fila par (pico arriba)
-        if (IsKeyPressed(KEY_X)) {
-            next_player_row++;
-        } else if (IsKeyPressed(KEY_A)) {
-            next_player_col--;
-        } else if (IsKeyPressed(KEY_D)) {
-            next_player_col++;
-        } else if (IsKeyPressed(KEY_Q)) {
-            next_player_row--;
-            next_player_col -= IsOffsetPair(current_player_row - 1) ? 1 : 0;
-        } else if (IsKeyPressed(KEY_E)) {
-            next_player_row--;
-            next_player_col += IsOffsetPair(current_player_row - 1) ? 0 : 1;  // ↗ ya corregido
+        else
+        {
+
+            if (IsKeyPressed(KEY_X))
+            {
+                next_player_row++;
+            }
+            else if (IsKeyPressed(KEY_A))
+            {
+                next_player_col--;
+            }
+            else if (IsKeyPressed(KEY_D))
+            {
+                next_player_col++;
+            }
+            else if (IsKeyPressed(KEY_Q))
+            {
+                next_player_row--;
+                next_player_col -= IsOffsetPair(current_player_row - 1) ? 1 : 0;
+            }
+            else if (IsKeyPressed(KEY_E))
+            {
+                next_player_row--;
+                next_player_col += IsOffsetPair(current_player_row - 1) ? 0 : 1;
+            }
         }
-    }
 
         bool player_attempted_move = (next_player_row != current_player_row || next_player_col != current_player_col);
 
@@ -141,20 +176,24 @@ void Game::ProcessInput()
 
                 grid_manager.UpdateDynamicWalls(current_turn);
 
-                if (!clone.IsActive() && current_turn >= CLONE_ACTIVATION_TURNS) {
+                if (!clone.IsActive() && current_turn >= CLONE_ACTIVATION_TURNS)
+                {
                     clone.SetActive(true);
                 }
 
-                if (clone.IsActive()) {
+                if (clone.IsActive())
+                {
                     clone.UpdatePositionFromHistory(player.GetMovementHistory(), current_turn);
-                    if (player.GetPos() == clone.GetPos()) {
+                    if (player.GetPos() == clone.GetPos())
+                    {
                         current_game_state = GameState::GAME_OVER;
                         std::cout << "Game Over: Colisión con el clon en el turno " << current_turn << std::endl;
                         return;
                     }
                 }
 
-                if (player.GetRow() == grid_manager.GetRows() - 1 && player.GetCol() == grid_manager.GetCols() - 1) {
+                if (player.GetRow() == grid_manager.GetRows() - 1 && player.GetCol() == grid_manager.GetCols() - 1)
+                {
                     current_game_state = GameState::GAME_OVER;
                     std::cout << "¡Has escapado en el turno " << current_turn << "!" << std::endl;
                 }
@@ -162,10 +201,12 @@ void Game::ProcessInput()
         }
     }
 
-    if (IsKeyPressed(KEY_S)) {
+    if (IsKeyPressed(KEY_S))
+    {
         show_path_solution = !show_path_solution;
     }
-    if (current_game_state == GameState::GAME_OVER && IsKeyPressed(KEY_R)) {
+    if (current_game_state == GameState::GAME_OVER && IsKeyPressed(KEY_R))
+    {
         InitializeGame("maze.txt");
     }
 }
@@ -179,17 +220,19 @@ void Game::Render()
     renderer.DrawGrid(grid_manager, current_turn, maze_render_start_x, maze_render_start_y);
     renderer.DrawEntity(player, player.GetRow(), maze_render_start_x, maze_render_start_y, 0.8f, PLAYER_GREEN, "TÚ");
 
-    if (clone.IsActive()) {
+    if (clone.IsActive())
+    {
         renderer.DrawEntity(clone, clone.GetRow(), maze_render_start_x, maze_render_start_y, 0.6f, CLONE_BLUE, "CLON");
     }
 
-    if (show_path_solution) {
+    if (show_path_solution)
+    {
         std::vector<Position> shortest_path = grid_manager.CalculateShortestPath(
             player.GetPos(),
             {grid_manager.GetRows() - 1, grid_manager.GetCols() - 1},
-            current_turn
-        );
-        if (!shortest_path.empty()) {
+            current_turn);
+        if (!shortest_path.empty())
+        {
             renderer.DrawPath(shortest_path, maze_render_start_x, maze_render_start_y, 0.65f, PATH_SOLUTION_COLOR);
         }
     }

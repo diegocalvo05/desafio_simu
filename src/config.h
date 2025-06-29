@@ -35,13 +35,13 @@ enum class GameState
     PATH_SHOWN // Podría integrarse o manejarse de otra forma
 };
 
-// Tipos de celdas del laberinto
+
 enum class CellType
 {
     PATH = 0,
     WALL = 1,
-    ALTERNATING_WALL = 2, // Cambia con turno par/impar
-    DYNAMIC_WALL = 3      // Se abre después de N turnos
+    ALTERNATING_WALL = 2, 
+    DYNAMIC_WALL = 3      
 };
 
 // Estructura para paredes dinámicas

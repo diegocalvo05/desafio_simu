@@ -1,5 +1,5 @@
 #include "player_entity.h"
-#include "config.h" // Para CLONE_ACTIVATION_TURNS
+#include "config.h" 
 
 void Clone::UpdatePositionFromHistory(const MovementHistory& player_history, int current_turn) {
     if (!active) return;

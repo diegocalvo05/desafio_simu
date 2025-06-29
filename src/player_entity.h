@@ -1,10 +1,9 @@
 #pragma once
 
-#include "config.h" // Para Position, MovementHistory
+#include "config.h" 
 #include <vector>
 #include <string>
 
-// Clase base para entidades móviles como el Jugador y el Clon
 class Entity
 {
 public:
@@ -32,9 +31,7 @@ class Player : public Entity
 public:
     MovementHistory movement_history;
 
-    Player(int r, int c) : Entity(r, c, true) { // El jugador siempre está activo al inicio
-        // El historial de movimiento se puede inicializar con la posición inicial si es necesario
-        // movement_history.push_back(pos); 
+    Player(int r, int c) : Entity(r, c, true) { 
     }
 
     void RecordMovement() {
